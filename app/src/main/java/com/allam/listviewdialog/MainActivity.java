@@ -2,6 +2,8 @@ package com.allam.listviewdialog;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -18,30 +20,29 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
     ItemAdapter itemAdapter;
 
+    ArrayList<Item> itemList;
+
+    private ItemDbHelper openDB;
+
+    ItemListFragment itemListFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        openDB = new ItemDbHelper(this);
+
+        itemList = new ArrayList<>();
+        itemList = openDB.getAllItems();
+
         ImageView btnAdd = findViewById(R.id.btnAdd);
         btnAdd.setOnClickListener(listener);
 
-        ListView lvData = findViewById(R.id.lvData);
-
-
-        ArrayList<Item> itemList = new ArrayList<>();
-
         itemAdapter = new ItemAdapter(this, R.layout.listview_item, itemList);
 
-        lvData.setAdapter(itemAdapter);
-
-        Item item1 = new Item("ayaka", "092896");
-        Item item2 = new Item("raiden ei", "092832");
-        Item item3 = new Item("eula", "092567");
-
-        itemAdapter.add(item1);
-        itemAdapter.add(item2);
-        itemAdapter.add(item3);
+        itemListFragment = (ItemListFragment)
+                getSupportFragmentManager().findFragmentById(R.id.fragmentItemList);
     }
 
     View.OnClickListener listener = new View.OnClickListener() {
@@ -68,9 +69,14 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // do something
-                        Item item = new Item(etName.getText().toString(), etPhone.getText().toString());
-                        itemAdapter.add(item);
+                        String name = etName.getText().toString();
+                        String phone = etPhone.getText().toString();
+
+                        Item item = new Item(name, phone);
+
+                        long id = openDB.addItem(item);
+                        item.setId(id);
+                        itemListFragment.addList(item);
                         dialog.dismiss();
                     }
                 })
